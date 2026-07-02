@@ -74,6 +74,36 @@ CREATE TABLE users (
 -- ============================================================
 -- COMPANIES
 -- ============================================================
+CREATE TABLE companies (
+    id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    website VARCHAR(2048) NULL,
+    location VARCHAR(255) NOT NULL,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP NULL,
+
+    created_by BIGINT NULL,
+    updated_by BIGINT NULL,
+    deleted_by BIGINT NULL,
+
+    CONSTRAINT fk_companies_created_by
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+
+    CONSTRAINT fk_companies_updated_by
+        FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+
+    CONSTRAINT fk_companies_deleted_by
+        FOREIGN KEY (deleted_by) REFERENCES users(id) ON DELETE SET NULL
+);
+-- ============================================================
+-- COMPANY MEMBERS
+-- links users to companies for ownership/authorization checks
+-- ============================================================
 CREATE TYPE company_member_role_enum AS ENUM (
     'owner',
     'recruiter'
