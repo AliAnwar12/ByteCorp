@@ -27,6 +27,11 @@ CREATE TYPE application_status_enum AS ENUM (
     'rejected'
 );
 
+CREATE TYPE user_role_enum AS ENUM (
+    'job_seeker',
+    'company_representative',
+    'admin'
+);
 
 -- ============================================================
 -- USERS
@@ -37,6 +42,7 @@ CREATE TABLE users (
 
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    role user_role_enum NOT NULL DEFAULT 'job_seeker',
     password_hash VARCHAR(255) NOT NULL,
     bio TEXT NULL,
     years_of_experience INT NOT NULL DEFAULT 0,
@@ -68,15 +74,17 @@ CREATE TABLE users (
 -- ============================================================
 -- COMPANIES
 -- ============================================================
+CREATE TYPE company_member_role_enum AS ENUM (
+    'owner',
+    'recruiter'
+);
 
-CREATE TABLE companies (
+CREATE TABLE company_members (
     id BIGSERIAL PRIMARY KEY,
 
-    name VARCHAR(255) NOT NULL,
-    description TEXT NULL,
-    website VARCHAR(2048) NULL,
-    location VARCHAR(255) NOT NULL,
-    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    company_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    role company_member_role_enum NOT NULL DEFAULT 'recruiter',
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -86,13 +94,19 @@ CREATE TABLE companies (
     updated_by BIGINT NULL,
     deleted_by BIGINT NULL,
 
-    CONSTRAINT fk_companies_created_by
+    CONSTRAINT fk_company_members_company
+        FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_company_members_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_company_members_created_by
         FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
 
-    CONSTRAINT fk_companies_updated_by
+    CONSTRAINT fk_company_members_updated_by
         FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
 
-    CONSTRAINT fk_companies_deleted_by
+    CONSTRAINT fk_company_members_deleted_by
         FOREIGN KEY (deleted_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -302,6 +316,30 @@ ON companies (is_verified);
 
 CREATE INDEX idx_companies_deleted_at
 ON companies (deleted_at);
+
+
+-- Company Members
+CREATE UNIQUE INDEX uq_company_members_company_user_active
+ON company_members (company_id, user_id)
+WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_company_members_company_id
+ON company_members (company_id);
+
+CREATE INDEX idx_company_members_user_id
+ON company_members (user_id);
+
+CREATE INDEX idx_company_members_deleted_at
+ON company_members (deleted_at);
+
+CREATE INDEX idx_company_members_created_by
+ON company_members (created_by);
+
+CREATE INDEX idx_company_members_updated_by
+ON company_members (updated_by);
+
+CREATE INDEX idx_company_members_deleted_by
+ON company_members (deleted_by);
 
 
 -- Jobs
